@@ -1,11 +1,17 @@
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
+	"extends": "../cavrnus-app/tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"moduleResolution": "node",
+		"paths": {
+			"@cavrnus/csc/*": [
+				"../cavrnus-app/modules/csc/src"
+			]
+		},
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+	},
+	"include": [
+		"src"
+	]
 }

@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@cavrnus/lib": "^0.3.82",
+	"@cavrnus/csc": "file:../cavrnus-app/modules/csc",
     "http-status-codes": "^2.3.0",
     "pinia": "^2.0.23",
     "vite-plugin-vuetify": "^2.0.3",

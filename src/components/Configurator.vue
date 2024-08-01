@@ -16,7 +16,7 @@
 						CarColor
 					</v-col>
 					<v-col cols="4">
-						<v-text-field v-model="carColor" hide-details @blur="updateString(carColor, 'Car/CarColor')"></v-text-field>
+						<v-text-field v-model="carColor" hide-details @blur="updateString('Car', 'CarColor', carColor)"></v-text-field>
 					</v-col>
 				</v-row>
 				<v-row class="align-center">
@@ -24,7 +24,7 @@
 						DriverDoorAnimation
 					</v-col>
 					<v-col cols="4">
-						<v-switch v-model="driverDoorAnimation" @change="updateBoolean(driverDoorAnimation, 'Car/DriverDoorAnimation')" hide-details></v-switch>
+						<v-switch v-model="driverDoorAnimation" @change="updateBoolean('Car', 'DriverDoorAnimation', driverDoorAnimation)" hide-details></v-switch>
 					</v-col>
 				</v-row>
 				<v-row class="align-center">
@@ -32,7 +32,7 @@
 						HeadlightVis
 					</v-col>
 					<v-col cols="4">
-						<v-switch v-model="headlightVis" @change="updateBoolean(headlightVis, 'Car/HeadlightVis')" hide-details></v-switch>
+						<v-switch v-model="headlightVis" @change="updateBoolean('Car', 'HeadlightVis', headlightVis)" hide-details></v-switch>
 					</v-col>
 				</v-row>
 				<v-row class="align-center">
@@ -40,7 +40,7 @@
 						PassengerDoorAnimation
 					</v-col>
 					<v-col cols="4">
-						<v-switch v-model="passengerDoorAnimation" @change="updateBoolean(passengerDoorAnimation, 'Car/PassengerDoorAnimation')" hide-details></v-switch>
+						<v-switch v-model="passengerDoorAnimation" @change="updateBoolean('Car', 'PassengerDoorAnimation', passengerDoorAnimation)" hide-details></v-switch>
 					</v-col>
 				</v-row>
 				<v-row class="align-center">
@@ -48,7 +48,7 @@
 						ShadowStrength
 					</v-col>
 					<v-col cols="4">
-						<v-text-field v-model="shadowStrength" @blur="updateScalar(shadowStrength, 'Car/ShadowStrength')" hide-details type="number"></v-text-field>
+						<v-text-field v-model="shadowStrength" @blur="updateScalar('Car', 'ShadowStrength', shadowStrength)" hide-details type="number"></v-text-field>
 					</v-col>
 				</v-row>
 				<v-row class="align-center">
@@ -56,7 +56,7 @@
 						SunlightRotation
 					</v-col>
 					<v-col cols="4">
-						<v-text-field v-model="sunlightRotation" @blur="updateScalar(sunlightRotation, 'Car/SunlightRotation')" hide-details type="number"></v-text-field>
+						<v-text-field v-model="sunlightRotation" @blur="updateScalar('Car', 'SunlightRotation', sunlightRotation)" hide-details type="number"></v-text-field>
 					</v-col>
 				</v-row>
 				<v-row class="align-center">
@@ -64,7 +64,7 @@
 						TrunkAnimation
 					</v-col>
 					<v-col cols="4">
-						<v-switch v-model="trunkAnimation" @change="updateBoolean(trunkAnimation, 'Car/TrunkAnimation')" hide-details></v-switch>
+						<v-switch v-model="trunkAnimation" @change="updateBoolean('Car', 'TrunkAnimation', trunkAnimation)" hide-details></v-switch>
 					</v-col>
 				</v-row>
 				<v-row class="align-center">
@@ -72,7 +72,7 @@
 						UnderGlowVis
 					</v-col>
 					<v-col cols="4">
-						<v-switch v-model="underglowVis" @change="updateBoolean(underglowVis, 'Car/UnderGlowVis')" hide-details></v-switch>
+						<v-switch v-model="underglowVis" @change="updateBoolean('Car', 'UnderGlowVis', underglowVis)" hide-details></v-switch>
 					</v-col>
 				</v-row>
 			</v-card-text>
@@ -83,11 +83,9 @@
 <script setup lang="ts">
 import { onBeforeMount, onBeforeUnmount, ref, watch } from 'vue';
 import { useAppState } from '../state';
-import { RoomSystemManager } from '../iam/room-system';
-import { SessionConnection } from '@cavrnus/lib/conn';
+import { SpaceConnectionManager } from '../services/space-connection';
 import { useRouter } from 'vue-router';
 import { Hook } from '@cavrnus/lib/V';
-import { V } from '@cavrnus/lib';
 
 const state = useAppState();
 const router = useRouter();
@@ -104,14 +102,15 @@ const shadowStrength = ref(0);
 const sunlightRotation = ref(0);
 const trunkAnimation = ref(false);
 const underglowVis = ref(false);
+const spaceConnectionManager = new SpaceConnectionManager();
 
 onBeforeMount(async () => {
 	if (state.session?.session)
 	{
-		state.roomSystem = new RoomSystemManager();
-		await state.roomSystem.connect(state.session.session as unknown as SessionConnection);
+		await spaceConnectionManager.connect(state.session.session);
+		state.spaceConnection = spaceConnectionManager.spaceConnection;
 
-		hookProperties();
+		await hookProperties();
 	}
 	else
 	{
@@ -121,18 +120,23 @@ onBeforeMount(async () => {
 	isLoading.value = false;
 });
 
-function hookProperties()
+async function hookProperties()
 {
-	const properties = state.session!.session!.journal.properties;
-
-	hooks.value.push(V.bind(properties.searchForStringProperty("Car/CarColor").current, v => {carColor.value = v;}));
-	hooks.value.push(V.bind(properties.searchForBooleanProperty("Car/DriverDoorAnimation").current, v => {driverDoorAnimation.value = v;}));
-	hooks.value.push(V.bind(properties.searchForBooleanProperty("Car/HeadlightVis").current, v => {headlightVis.value = v;}));
-	hooks.value.push(V.bind(properties.searchForBooleanProperty("Car/PassengerDoorAnimation").current, v => {passengerDoorAnimation.value = v;}));
-	hooks.value.push(V.bind(properties.searchForScalarProperty("Car/ShadowStrength").current, v => {shadowStrength.value = v;}));
-	hooks.value.push(V.bind(properties.searchForScalarProperty("Car/SunlightRotation").current, v => {sunlightRotation.value = v;}));
-	hooks.value.push(V.bind(properties.searchForBooleanProperty("Car/TrunkAnimation").current, v => {trunkAnimation.value = v;}));
-	hooks.value.push(V.bind(properties.searchForBooleanProperty("Car/UnderGlowVis").current, v => {underglowVis.value = v;}));
+	try
+	{
+		hooks.value.push(spaceConnectionManager.bindStringProperty("Car", "CarColor", v => {carColor.value = v;}));
+		hooks.value.push(spaceConnectionManager.spaceConnection.bindBooleanPropertyValue("Car", "DriverDoorAnimation", v => {driverDoorAnimation.value = v;}));
+		hooks.value.push(spaceConnectionManager.spaceConnection.bindBooleanPropertyValue("Car", "HeadlightVis", v => {headlightVis.value = v;}));
+		hooks.value.push(spaceConnectionManager.spaceConnection.bindBooleanPropertyValue("Car", "PassengerDoorAnimation", v => {passengerDoorAnimation.value = v;}));
+		hooks.value.push(spaceConnectionManager.spaceConnection.bindScalarPropertyValue("Car", "ShadowStrength", v => {shadowStrength.value = v;}));
+		hooks.value.push(spaceConnectionManager.spaceConnection.bindScalarPropertyValue("Car", "SunlightRotation", v => {sunlightRotation.value = v;}));
+		hooks.value.push(spaceConnectionManager.spaceConnection.bindBooleanPropertyValue("Car", "TrunkAnimation", v => {trunkAnimation.value = v;}));
+		hooks.value.push(spaceConnectionManager.spaceConnection.bindBooleanPropertyValue("Car", "UnderGlowVis", v => {underglowVis.value = v;}));
+	}
+	catch (err)
+	{
+		console.log(err);
+	}
 }
 
 async function stop()
@@ -143,19 +147,19 @@ async function stop()
 	}
 }
 
-function updateString(value: string, id: string)
+function updateString(container: string, id: string, value: string)
 {
-	state.roomSystem?.updateString(value, id);
+	state.spaceConnection?.postStringPropertyUpdate(container, id, value);
 }
 
-function updateScalar(value: number, id: string)
+function updateScalar(container: string, id: string, value: number)
 {
-	state.roomSystem?.updateScalar(value, id);
+	state.spaceConnection?.postScalarPropertyUpdate(container, id, value);
 }
 
-function updateBoolean(value: boolean, id: string)
+function updateBoolean(container: string, id: string, value: boolean)
 {
-	state.roomSystem?.updateBoolean(value, id);
+	state.spaceConnection?.postBooleanPropertyUpdate(container, id, value);
 }
 
 onBeforeUnmount(async () => {

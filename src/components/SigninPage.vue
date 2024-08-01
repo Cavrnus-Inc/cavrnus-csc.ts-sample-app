@@ -10,7 +10,10 @@
 						<span>Connect to begin configurating</span>
 					</v-col>
 					<v-col>
-						<v-text-field v-model="roomId" hide-details readOnly></v-text-field>
+						<v-text-field v-model="api"></v-text-field>
+						<v-text-field v-model="username"></v-text-field>
+						<v-text-field v-model="password" type="password"></v-text-field>
+						<v-text-field v-model="roomId"></v-text-field>
 					</v-col>
 				</v-row>
 			</v-card-text>
@@ -25,14 +28,18 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import * as config from "../../configs/app.config.json";
-import { SessionManager } from '../iam/session';
+import { Session } from '../services/session';
 import { useAppState } from '../state';
 import { useRouter } from 'vue-router';
+import { CavrnusSession } from '@cavrnus/csc';
 
 const state = useAppState();
 const router = useRouter();
 
 const roomId = ref("");
+const api = ref("");
+const username = ref("");
+const password = ref("");
 const isBusy = ref(true);
 
 onMounted(() => {
@@ -47,8 +54,12 @@ async function connect()
 
 	try
 	{
-		state.session = new SessionManager();
-		await state.session.start(roomId.value);
+		const session = new Session();
+		
+		await session.authenticateWithPassword(api.value, username.value, password.value);
+		await session.joinSpace(roomId.value);
+
+		state.session = session.session;
 
 		router.push({name: "configurator"});
 	}
@@ -65,7 +76,12 @@ async function connect()
 function loadConfig()
 {
 	if (config.roomId)
+	{
 		roomId.value = config.roomId;
+		username.value = config.email;
+		password.value = config.password;	
+		api.value = config.apiEndpoint;
+	}
 }
 
 </script>
