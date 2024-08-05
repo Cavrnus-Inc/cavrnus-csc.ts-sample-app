@@ -1,4 +1,6 @@
-import { CavrnusSpaceConnection, Hook } from "@cavrnus/csc";
+import { CavrnusSpaceConnection, Hook, RgbaColor } from "@cavrnus/csc";
+
+
 
 export class SpaceConnectionManager
 {
@@ -18,12 +20,19 @@ export class SpaceConnectionManager
 		}
 	}
 
+	//#region String
+
+	public async stringPropertyHasDefaultValue(container: string, id: string)
+	{
+		this._spaceConnection.stringPropertyHasDefaultValue(container, id);
+	}
+
 	public async postStringPropertyUpdate(container: string, id: string, value: string)
 	{
 		try
 		{
 			if (!this._spaceConnection)
-				throw "No room system found";
+				throw new Error("Room system not found");
 
 			this._spaceConnection.postStringPropertyUpdate(container, id, value);
 		}
@@ -39,7 +48,7 @@ export class SpaceConnectionManager
 		try
 		{
 			if (!this._spaceConnection)
-				throw "No room system found";
+				throw new Error("Room system not found");
 
 			return this._spaceConnection.getStringPropertyValue(containerName, propertyName);
 
@@ -54,19 +63,21 @@ export class SpaceConnectionManager
 	public bindStringProperty(containerId: string, propertyId: string, callback: (v: string) => void): Hook
 	{
 		if (!this._spaceConnection)
-			throw "No room system found";
+			throw new Error("Room system not found");
 
 		return this._spaceConnection.bindStringPropertyValue(containerId, propertyId, callback);
 	}
-	
-	public async postBooleanPropertyUpdate(container: string, propertyId: string, value: boolean)
+
+	//#region Color
+
+	public async postColorPropertyUpdate(container: string, id: string, value: RgbaColor)
 	{
 		try
 		{
 			if (!this._spaceConnection)
-				throw "No room system found";
+				throw new Error("Room system not found");
 
-			this._spaceConnection.postBooleanPropertyUpdate(container, propertyId, value);
+			this._spaceConnection.postColorPropertyUpdate(container, id, value);
 		}
 		catch (err)
 		{
@@ -75,12 +86,71 @@ export class SpaceConnectionManager
 		}
 	}
 
+	public getColorPropertyValue(containerName: string, propertyName: string): RgbaColor | undefined
+	{
+		try
+		{
+			if (!this._spaceConnection)
+				throw new Error("Room system not found");
+
+			return this._spaceConnection.getColorPropertyValue(containerName, propertyName);
+		}
+		catch (err)
+		{
+			console.error(err);
+			throw err;
+		}
+	}
+
+	public bindColorProperty(containerId: string, propertyId: string, callback: (v: RgbaColor) => void): Hook
+	{
+		if (!this._spaceConnection)
+			throw new Error("Room system not found");
+
+		return this._spaceConnection.bindColorPropertyValue(containerId, propertyId, callback);
+	}
+	
+	//#region Boolean
+
+	public async postBooleanPropertyUpdate(container: string, propertyId: string, value: boolean)
+	{
+		try
+		{
+			if (!this._spaceConnection)
+				throw new Error("Room system not found");
+
+			this._spaceConnection.postBooleanPropertyUpdate(container, propertyId, value);
+		}
+		catch (err)
+		{
+			throw err;
+		}
+	}
+
+	public bindBooleanProperty(containerId: string, propertyId: string, callback: (v: boolean) => void): Hook
+	{
+		if (!this._spaceConnection)
+			throw new Error("Room system not found");
+
+		return this._spaceConnection.bindBooleanPropertyValue(containerId, propertyId, callback);
+	}
+
+	//#region Scalar
+
+	public bindScalarProperty(containerId: string, propertyId: string, callback: (v: number) => void): Hook
+	{
+		if (!this._spaceConnection)
+			throw new Error("Room system not found");
+
+		return this._spaceConnection.bindScalarPropertyValue(containerId, propertyId, callback);
+	}
+
 	public async postScalarPropertyUpdate(container: string, propertyId: string, value: number)
 	{
 		try
 		{
 			if (!this._spaceConnection)
-				throw "No room system found";
+				throw new Error("Room system not found");
 
 			this._spaceConnection.postScalarPropertyUpdate(container, propertyId, value)
 		}
