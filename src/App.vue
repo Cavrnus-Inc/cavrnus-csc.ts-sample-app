@@ -6,16 +6,17 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { useAppState } from './state/app';
+import { useAppState, useConn } from './state';
 import { useRouter } from 'vue-router';
 
 const state = useAppState();
 const router = useRouter();
+const conn = useConn();
 
-const connected = ref(state.session?.isConnected ?? false);
+const connected = ref(conn.get() ?? false);
 
 onMounted(() => {
-	if (!state.session?.isConnected)
+	if (!connected.value)
 		router.push({name: "signin"});
 });
 

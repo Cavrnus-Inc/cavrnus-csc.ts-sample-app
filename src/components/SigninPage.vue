@@ -1,66 +1,103 @@
 <template>
 	<div class="d-flex align-center justify-center fill-height">
 		<v-card class="card">
-			<v-card-title>
-				<span>Car Configurator</span>
-			</v-card-title>
-			<v-card-text>
-				<v-row class="align-center">
-					<v-col>
-						<span>Connect to begin configurating</span>
-					</v-col>
-					<v-col>
-						<v-text-field v-model="api"></v-text-field>
-						<v-text-field v-model="username"></v-text-field>
-						<v-text-field v-model="password" type="password"></v-text-field>
-						<v-text-field v-model="roomId"></v-text-field>
-					</v-col>
-				</v-row>
-			</v-card-text>
-			<v-card-actions>
-				<v-spacer/>
-				<v-btn @click="connect" :loading="isBusy">Connect</v-btn>
-			</v-card-actions>
+			<v-tabs v-model="tab">
+				<v-tab value="existingUser">Existing User</v-tab>
+				<v-tab value="guestUser">Guest User</v-tab>
+			</v-tabs>
+			<v-tabs-window v-model="tab">
+				<v-tabs-window-item value="existingUser">
+					<v-card-text>
+						<span class="header mb-4">Log into the Cavrnus Spatial Connector as an existing user:</span>
+						<v-col>
+							<v-text-field label="Api Endpoint" v-model="api"></v-text-field>
+							<v-text-field label="Username" v-model="username"></v-text-field>
+							<v-text-field label="Password" v-model="password" type="password"></v-text-field>
+							<v-text-field label="Space ID" v-model="roomId"></v-text-field>
+						</v-col>
+						<v-row no-gutters>
+							<v-spacer/>
+							<v-btn @click="connectUser" :loading="isBusy" flat>Connect</v-btn>
+						</v-row>
+					</v-card-text>
+				</v-tabs-window-item>
+				<v-tabs-window-item value="guestUser">
+					<v-card-text>
+						<span class="header mb-4">Log into the Cavrnus Spatial Connector as a guest user:</span>
+						<v-col>
+							<v-text-field label="Screen Name" v-model="screenName"></v-text-field>
+							<v-text-field label="Space ID" v-model="roomId"></v-text-field>
+						</v-col>
+						<v-row no-gutters>
+							<v-spacer/>
+							<v-btn @click="connectGuest" :loading="isBusy" flat>Connect</v-btn>
+						</v-row>
+					</v-card-text>
+				</v-tabs-window-item>
+			</v-tabs-window>
 		</v-card>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from "vue"
 import * as config from "../../configs/app.config.json";
-import { Session } from '../services/session';
-import { useAppState } from '../state';
-import { useRouter } from 'vue-router';
-import { CavrnusSession } from '@cavrnus/csc';
+import { useAppState, useConn } from "../state";
+import { useRouter } from "vue-router";
+import { CavrnusSpatialConnector } from "../services/csc";
 
 const state = useAppState();
 const router = useRouter();
+const conn = useConn();
 
 const roomId = ref("");
 const api = ref("");
 const username = ref("");
 const password = ref("");
+const screenName = ref("");
 const isBusy = ref(true);
+const tab = ref<string>("existingUser");
 
 onMounted(() => {
 	loadConfig();
 
+	const csc = new CavrnusSpatialConnector();
+	state.csc = csc;
+
 	isBusy.value = false;
 });
 
-async function connect()
+async function connectGuest()
 {
 	isBusy.value = true;
 
 	try
 	{
-		const session = new Session();
-		
-		await session.authenticateWithPassword(api.value, username.value, password.value);
-		await session.joinSpace(roomId.value);
+		await state.csc!.authenticateAsGuest(api.value, screenName.value);
+		conn.set(await state.csc!.joinSpace(roomId.value));
 
-		state.session = session.session;
+		router.push({name: "configurator"});
+	}
+	catch (err)
+	{
+		throw err;
+	}
+	finally
+	{
+		isBusy.value = false;
+	}
+}
 
+async function connectUser()
+{
+	isBusy.value = true;
+
+	try
+	{
+		await state.csc!.authenticateWithPassword(api.value, username.value, password.value);
+		conn.set(await state.csc!.joinSpace(roomId.value));
+
+		state.csc!.awaitLocalUser(conn.get());
 		router.push({name: "configurator"});
 	}
 	catch (err)
@@ -84,11 +121,20 @@ function loadConfig()
 	}
 }
 
+watch(tab, () => {
+	loadConfig();
+	screenName.value = "";
+});
 </script>
 
 <style scoped>
 .card {
 	padding: 10px;
 	width: 680px;
+
+	.header {
+		font-weight: bold;
+		font-size: 18px;
+	}
 }
 </style>

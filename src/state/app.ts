@@ -1,9 +1,8 @@
 import { defineStore } from "pinia";
-import { CavrnusSpaceConnection, CavrnusSession } from "@cavrnus/csc";
+import { CavrnusSpatialConnector } from "src/services/csc";
 
 export const useAppState = defineStore("appState", {
 	state: () => ({
-		session: null as CavrnusSession | null,
-		spaceConnection: null as CavrnusSpaceConnection | null
+		csc: undefined as CavrnusSpatialConnector | undefined,
 	})
 })
