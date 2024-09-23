@@ -18,13 +18,15 @@
 <script setup lang="ts">
 import { onBeforeMount, onBeforeUnmount, ref } from 'vue';
 import { useAppState, useConn } from '../state';
-import { CavrnusUser, Hook } from '@cavrnus/csc/types';
+import { CavrnusUser, Hook } from '@cavrnus/csc';
 import Partcipant from './Partcipant.vue';
+import { LiveSwitchService, RtcEvents } from '@cavrnus/webrtc';
 
 const state = useAppState();
 const conn = useConn();
 const isLoading = ref(true);
 let spaceConnection = conn.get();
+const webRtc = new LiveSwitchService();
 
 const hooks = ref<Hook[]>([]);
 
@@ -32,9 +34,20 @@ const spaceUsers = ref<CavrnusUser[]>([]);
 
 onBeforeMount(async () => {
 	await hookProperties();
+	await connectRtc();
+
+	webRtc.eventEmitter.on(RtcEvents.LocalAudioLevelChanged, (level) => {
+		onLocalAudioLevelChanged(level);
+	});
+
 
 	isLoading.value = false;
 });
+
+function onLocalAudioLevelChanged(level: number)
+{
+	console.log("Audio level has changed")
+}
 
 async function hookProperties()
 {
@@ -44,9 +57,18 @@ async function hookProperties()
 		{
 			hooks.value.push(state.csc!.bindSpaceUsers(spaceConnection, v => {spaceUsers.value.push(v);}, v => {spaceUsers.value.splice(spaceUsers.value.indexOf(v), 1);}));
 		}
+	}
+	catch (err)
+	{
+		console.log(err);
+	}
+}
 
-		console.log(spaceUsers.value.length)
-		console.log(spaceUsers.value)
+async function connectRtc()
+{
+	try
+	{
+		await webRtc.start(spaceConnection.session!);
 	}
 	catch (err)
 	{

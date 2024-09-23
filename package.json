@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+	"clean": "rimraf ./dist && rimraf tsconfig.package.tsbuildinfo &&  rimraf tsconfig.build.tsbuildinfo &&  rimraf tsconfig.tsbuildinfo",
     "preview": "vite preview"
   },
   "dependencies": {
-	"@cavrnus/csc": "0.0.1",
+    "@cavrnus/csc": "^0.0.1",
+    "@cavrnus/webrtc": "file:../cavrnus-app/modules/webrtc",
     "http-status-codes": "^2.3.0",
     "pinia": "^2.0.23",
     "vite-plugin-vuetify": "^2.0.3",
@@ -21,6 +23,7 @@
     "@vitejs/plugin-vue": "^5.0.5",
     "typescript": "^5.2.2",
     "vite": "^5.3.4",
+	"nyc": "^15.0.0",
     "vue-tsc": "^2.0.24"
   }
 }

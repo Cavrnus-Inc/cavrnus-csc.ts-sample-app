@@ -4,12 +4,12 @@
 		"baseUrl": ".",
 		"moduleResolution": "node",
 		"paths": {
-			"@cavrnus/csc/*": [
-				"../cavrnus-app/modules/csc/src"
-			]
+			"@cavrnus/webrtc": ["../cavrnus-app/modules/webrtc"]
 		},
 		"resolveJsonModule": true,
 		"isolatedModules": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true
 	},
 	"include": [
 		"src"

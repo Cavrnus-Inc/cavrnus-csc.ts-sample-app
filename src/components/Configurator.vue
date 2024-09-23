@@ -8,8 +8,8 @@
 
 		<v-card class="card" v-if="!isLoading">
 			<v-tabs v-model="tab">
-				<v-tab value="properties">Properties</v-tab>
 				<v-tab value="participants">Participants</v-tab>
+				<v-tab value="properties">Properties</v-tab>
 			</v-tabs>
 			<v-tabs-window v-model="tab">
 				<v-tabs-window-item value="properties">
@@ -33,14 +33,13 @@ import { useAppState, useConn } from "../state";
 import { useRouter } from "vue-router";
 import Properties from "./Properties.vue";
 import Participants from "./Participants.vue";
-import { CavrnusSpace } from "@cavrnus/csc";
 
 const state = useAppState();
 const conn = useConn();
 const router = useRouter();
 const isLoggedIn = ref(false);
 const isLoading = ref(true);
-const tab = ref("properties");
+const tab = ref("participants");
 
 onBeforeMount(async () => {
 	if (state.csc && conn.get())
