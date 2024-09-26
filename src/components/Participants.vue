@@ -1,16 +1,36 @@
 <template>
-    <div class="d-flex align-center fill-height">
+    <div class="fill-height">
 		<v-main class="d-flex align-top justify-center" v-if="isLoading">
 			<div>
 				<v-progress-circular indeterminate></v-progress-circular>
 			</div>
 		</v-main>
 		<div v-if="!isLoading">
-			<v-row row wrap>
-				<v-col class="mb-4" cols="12" v-for="user of spaceUsers">
-					<Partcipant class="mr-4" :user="user" />
-				</v-col>
-			</v-row>
+			<div>
+				<v-row align="center">
+					<v-col>
+						Audio
+					</v-col>
+					<v-col cols="8">
+						<v-select :items="audioDevices" item-value="id" item-title="name"></v-select>
+					</v-col>
+				</v-row>
+				<v-row align="center">
+					<v-col>
+						Video
+					</v-col>
+					<v-col cols="8">
+						<v-select :items="videoDevices" item-value="id" item-title="name"></v-select>
+					</v-col>
+				</v-row>
+			</div>
+			<div class="d-flex align-center fill-height">
+				<v-row row wrap>
+					<v-col class="mb-4" cols="6" v-for="user of spaceUsers">
+						<Partcipant class="mr-4" :user="user" />
+					</v-col>
+				</v-row>
+			</div>
 		</div>
     </div>
 </template>
@@ -20,15 +40,16 @@ import { onBeforeMount, onBeforeUnmount, ref } from 'vue';
 import { useAppState, useConn } from '../state';
 import { CavrnusUser, Hook } from '@cavrnus/csc';
 import Partcipant from './Partcipant.vue';
-import { LiveSwitchService, RtcEvents } from '@cavrnus/webrtc';
+import { CavrnusWebRtc, InputDevice } from '@cavrnus/webrtc';
 
 const state = useAppState();
 const conn = useConn();
 const isLoading = ref(true);
-let spaceConnection = conn.get();
-const webRtc = new LiveSwitchService();
+const spaceConnection = conn.get();
 
 const hooks = ref<Hook[]>([]);
+const audioDevices = ref<InputDevice[]>([]);
+const videoDevices = ref<InputDevice[]>([]);
 
 const spaceUsers = ref<CavrnusUser[]>([]);
 
@@ -36,17 +57,17 @@ onBeforeMount(async () => {
 	await hookProperties();
 	await connectRtc();
 
-	webRtc.eventEmitter.on(RtcEvents.LocalAudioLevelChanged, (level) => {
-		onLocalAudioLevelChanged(level);
-	});
-
-
 	isLoading.value = false;
 });
 
 function onLocalAudioLevelChanged(level: number)
 {
-	console.log("Audio level has changed")
+
+}
+
+function onLocalMuteChanged(value: boolean)
+{
+	console.log("we're muted")
 }
 
 async function hookProperties()
@@ -68,7 +89,11 @@ async function connectRtc()
 {
 	try
 	{
-		await webRtc.start(spaceConnection.session!);
+		const webRtc = await CavrnusWebRtc.startWebRtc(spaceConnection.session!);
+		// create connector
+		// give connector and session to next thing
+		audioDevices.value = webRtc.audioDevices;
+		videoDevices.value = webRtc.videoInputs;
 	}
 	catch (err)
 	{

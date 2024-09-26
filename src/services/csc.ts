@@ -435,4 +435,20 @@ export class CavrnusSpatialConnector
 			throw err;
 		}
 	}
+
+	public bindUserMuted(spaceConnection: CavrnusSpaceConnection, user: CavrnusUser, callback: (v: boolean) => void): Hook
+	{
+		try
+		{
+			if (!this.cavrnusFunctionLibrary)
+				throw new Error("Room system not found");
+
+			return this.cavrnusFunctionLibrary.bindUserMuted(spaceConnection, user, callback);
+		}
+		catch (err)
+		{
+			console.error(err);
+			throw err;
+		}
+	}
 }

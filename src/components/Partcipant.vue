@@ -1,17 +1,18 @@
 <template>
 	<v-card class="d-flex align-center">
-		<v-img cover height="39" width="39" :src="resolvePictureUrl(profilePicture)"></v-img>
+		<v-img cover size="96" :src="resolvePictureUrl(profilePicture)"></v-img>
 		<v-card-text>
 			<b>{{ userProfileDisplayName(user) }}</b>
+			<v-switch v-model="muted"></v-switch>
 		</v-card-text>
 </v-card>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeMount, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useAppState, useConn } from '../state';
 import { Hook } from '@cavrnus/lib/V';
-import { CavrnusSpace, CavrnusUser } from '@cavrnus/csc/types';
+import { CavrnusUser } from '@cavrnus/csc/types';
 
 const props = defineProps<{ 
 	user: CavrnusUser
@@ -24,7 +25,7 @@ let spaceConnection = conn.get();
 
 const profilePicture = ref("");
 const username = ref("");
-const spaces: CavrnusSpace[] = []
+const muted = ref(false);
 
 const hooks = ref<Hook[]>([]);
 
@@ -42,6 +43,7 @@ async function hookProperties()
 		{
 			hooks.value.push(state.csc!.bindUserName(spaceConnection, props.user, v => {username.value = v}));
 			hooks.value.push(state.csc!.bindProfilePic(spaceConnection, props.user, v => {profilePicture.value = v}));
+			hooks.value.push(state.csc!.bindUserMuted(spaceConnection, props.user, v => {muted.value = v}));
 		}
 	}
 	catch (err)
