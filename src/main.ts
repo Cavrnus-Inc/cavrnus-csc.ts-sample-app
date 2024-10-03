@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
 // Vuetify
 import 'vuetify/styles'
@@ -18,6 +19,13 @@ const router = createRouter({
 const vuetify = createVuetify({
 	components,
 	directives,
+	icons: {
+		defaultSet: 'mdi',
+		aliases,
+		sets: {
+		  mdi,
+		},
+	  },
 });
 
 createApp(App).use(vuetify).use(router).use(pinia).mount('#app');
