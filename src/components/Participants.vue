@@ -27,7 +27,15 @@
 						Audio
 					</v-col>
 					<v-col cols="8">
-						<v-select :items="audioDevices" v-model="audioDevice" @update:model-value="updateAudioDevice" item-value="id" return-object item-title="name" variant="solo" hide-details>
+						<v-select 
+							:items="audioDevices" 
+							v-model="audioDevice" 
+							@update:model-value="updateAudioDevice" 
+							item-value="id" 
+							return-object 
+							item-title="name" 
+							variant="solo" 
+							hide-details>
 						</v-select>
 					</v-col>
 				</v-row>
@@ -36,7 +44,15 @@
 						Video
 					</v-col>
 					<v-col cols="8">
-						<v-select :items="videoDevices" v-model="videoDevice" @update:model-value="updateVideoDevice" item-value="id" return-object item-title="name" variant="solo" hide-details>
+						<v-select 
+							:items="videoDevices" 
+							v-model="videoDevice" 
+							@update:model-value="updateVideoDevice" 
+							item-value="id" 
+							return-object 
+							item-title="name" 
+							variant="solo" 
+							hide-details>
 						</v-select>
 					</v-col>
 				</v-row>
@@ -66,7 +82,6 @@ const hooks = ref<Hook[]>([]);
 const audioDevices = ref<InputDevice[]>([]);
 const videoDevices = ref<InputDevice[]>([]);
 
-// TODO: bind audio/video devies
 const audioDevice = ref<InputDevice>();
 const videoDevice = ref<InputDevice>();
 
@@ -87,6 +102,8 @@ async function hookProperties()
 			hooks.value.push(state.csc!.bindSpaceUsers(spaceConnection, v => {spaceUsers.value.push(v);}, v => {spaceUsers.value.splice(spaceUsers.value.indexOf(v), 1);}));
 			hooks.value.push(state.csc!.bindAudioInputs(v => {audioDevices.value = v}));
 			hooks.value.push(state.csc!.bindVideoInputs(v => {videoDevices.value = v}));
+			hooks.value.push(state.csc!.bindVideoInput(v => {videoDevice.value = v}));
+			hooks.value.push(state.csc!.bindAudioInput(v => {audioDevice.value = v}));
 		}
 	}
 	catch (err)
@@ -94,7 +111,6 @@ async function hookProperties()
 		console.log(err);
 	}
 }
-
 
 function updateVideoDevice(device: InputDevice)
 {

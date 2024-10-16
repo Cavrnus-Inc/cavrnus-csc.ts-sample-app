@@ -60,14 +60,6 @@ const tab = ref<string>("existingUser");
 
 onMounted(async () => {
 	loadConfig();
-
-	const options: CscOptions = {
-		enableRtc: true
-	};
-
-	state.csc = await initializeCsc(options);
-
-
 	isBusy.value = false;
 });
 
@@ -77,6 +69,10 @@ async function connectGuest()
 
 	try
 	{
+		const options: CscOptions = {
+			enableRtc: true
+		};
+		state.csc = await initializeCsc(options);
 		await state.csc!.authenticateAsGuest(api.value, screenName.value);
 		conn.set(await state.csc!.joinSpace(roomId.value));
 
@@ -98,6 +94,10 @@ async function connectUser()
 
 	try
 	{
+		const options: CscOptions = {
+			enableRtc: true
+		};
+		state.csc = await initializeCsc(options);
 		await state.csc!.authenticateWithPassword(api.value, username.value, password.value);
 		conn.set(await state.csc!.joinSpace(roomId.value));
 

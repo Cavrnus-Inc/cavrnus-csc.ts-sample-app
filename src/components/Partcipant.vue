@@ -6,10 +6,19 @@
 				<b>{{ userProfileDisplayName(props.user) }}</b>
 			</v-row>
 			<v-row>
-				<span>Remote muted: {{ isMuted }}</span>
+				<span>Remote muted: {{ isAudioMuted }}</span>
 			</v-row>
 			<v-row>
-				<v-switch v-model="isMuted" @update:model-value="onUserMuteStateUpdated"></v-switch>
+				<v-switch v-model="isAudioMuted" @update:model-value="onUserMuteStateUpdated"></v-switch>
+			</v-row>
+			<v-row v-if="isSelf">
+				<span>Video muted: {{ isVideoMuted }}</span>
+			</v-row>
+			<v-row v-if="isSelf">
+				<v-switch v-model="isVideoMuted" @update:model-value="onUserStreamStateUpdated"></v-switch>
+			</v-row>
+			<v-row v-if="isVideoMuted">
+
 			</v-row>
 		</v-card-text>
 </v-card>
@@ -32,7 +41,8 @@ let spaceConnection = conn.get();
 
 const profilePicture = ref("");
 const username = ref("");
-const isMuted = ref(false);
+const isAudioMuted = ref(false);
+const isVideoMuted = ref(false);
 const isSelf = ref(false);
 
 const hooks = ref<Hook[]>([]);
@@ -54,15 +64,20 @@ async function hookProperties()
 
 			hooks.value.push(state.csc!.bindUserName(spaceConnection, props.user, v => {username.value = v}));
 			hooks.value.push(state.csc!.bindProfilePic(spaceConnection, props.user, v => {profilePicture.value = v}));
-			hooks.value.push(state.csc!.bindUserMuted(spaceConnection, props.user, v => { isMuted.value = v }));
+			hooks.value.push(state.csc!.bindUserMuted(spaceConnection, props.user, v => { isAudioMuted.value = v }));
+			hooks.value.push(state.csc!.bindUserStreaming(spaceConnection, props.user, v => { isVideoMuted.value = v }));
 		}
-
 	}
 	catch (err)
 	{
 		console.log(err);
 		throw err;
 	}
+}
+
+function getVideoStream()
+{
+	// return state.csc?.liveswitchService?.localMedia.
 }
 
 function onUserMuteStateUpdated(value: boolean | null)
@@ -76,6 +91,14 @@ function onUserMuteStateUpdated(value: boolean | null)
 	}
 }
 
+function onUserStreamStateUpdated(value: boolean | null)
+{
+	if (state.csc && value !== null)
+	{
+		console.log("we're updating streaming state")
+		state.csc.setLocalUserStreamingState(spaceConnection, value, value);
+	}
+}
 
 function resolvePictureUrl(profilePicture: string | undefined)
 {
