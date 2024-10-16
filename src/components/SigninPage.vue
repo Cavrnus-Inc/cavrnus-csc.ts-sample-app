@@ -44,7 +44,7 @@ import { onMounted, ref, watch } from "vue"
 import * as config from "../../configs/app.config.json";
 import { useAppState, useConn } from "../state";
 import { useRouter } from "vue-router";
-import { CavrnusSpatialConnector } from "../services/csc";
+import { CscOptions, initializeCsc } from "@cavrnus/csc";
 
 const state = useAppState();
 const router = useRouter();
@@ -58,12 +58,8 @@ const screenName = ref("");
 const isBusy = ref(true);
 const tab = ref<string>("existingUser");
 
-onMounted(() => {
+onMounted(async () => {
 	loadConfig();
-
-	const csc = new CavrnusSpatialConnector();
-	state.csc = csc;
-
 	isBusy.value = false;
 });
 
@@ -73,6 +69,10 @@ async function connectGuest()
 
 	try
 	{
+		const options: CscOptions = {
+			enableRtc: true
+		};
+		state.csc = await initializeCsc(options);
 		await state.csc!.authenticateAsGuest(api.value, screenName.value);
 		conn.set(await state.csc!.joinSpace(roomId.value));
 
@@ -94,6 +94,10 @@ async function connectUser()
 
 	try
 	{
+		const options: CscOptions = {
+			enableRtc: true
+		};
+		state.csc = await initializeCsc(options);
 		await state.csc!.authenticateWithPassword(api.value, username.value, password.value);
 		conn.set(await state.csc!.joinSpace(roomId.value));
 

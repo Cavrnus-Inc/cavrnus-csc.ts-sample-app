@@ -1,10 +1,10 @@
-import { SpaceConnection } from "@cavrnus/csc";
+import { CavrnusSpaceConnection } from "@cavrnus/csc";
 
 export class Conn
 {
-	private spaceConnection!: SpaceConnection;
+	private spaceConnection!: CavrnusSpaceConnection;
 
-	public set(spaceConnection: SpaceConnection)
+	public set(spaceConnection: CavrnusSpaceConnection)
 	{
 		this.spaceConnection = spaceConnection;
 	}
