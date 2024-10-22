@@ -2,8 +2,8 @@
 	<div class="d-flex align-center justify-center fill-height">
 		<v-card class="card">
 			<v-tabs v-model="tab">
-				<v-tab value="existingUser">Existing User</v-tab>
 				<v-tab value="guestUser">Guest User</v-tab>
+				<v-tab value="existingUser">Existing User</v-tab>
 			</v-tabs>
 			<v-tabs-window v-model="tab">
 				<v-tabs-window-item value="existingUser">
@@ -116,12 +116,14 @@ async function connectUser()
 
 function loadConfig()
 {
+	api.value = config.apiEndpoint;
+	roomId.value = config.roomId;
+
+	// for local testing
 	if (config.roomId)
 	{
-		roomId.value = config.roomId;
 		username.value = config.email;
-		password.value = config.password;	
-		api.value = config.apiEndpoint;
+		password.value = config.password;
 	}
 }
 
