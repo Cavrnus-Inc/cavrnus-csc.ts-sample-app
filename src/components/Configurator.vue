@@ -7,27 +7,35 @@
 		</v-main>
 
 		<v-card class="card" v-if="!isLoading">
-			<v-tabs v-model="tab">
-				<v-tab value="participants">Participants</v-tab>
-				<v-tab value="properties">Properties</v-tab>
-			</v-tabs>
-			<v-tabs-window v-model="tab">
-				<v-tabs-window-item value="properties">
-					<v-card-text>
-						<Properties/>
-					</v-card-text>
-				</v-tabs-window-item>
-				<v-tabs-window-item value="participants">
-					<v-card-text>
-						<Participants/>
-					</v-card-text>
-				</v-tabs-window-item>
-			</v-tabs-window>
+			<div v-if="enableRtc">
+				<v-tabs v-model="tab">
+					<v-tab value="participants">Participants</v-tab>
+					<v-tab value="properties">Properties</v-tab>
+				</v-tabs>
+				<v-tabs-window v-model="tab">
+					<v-tabs-window-item value="properties">
+						<v-card-text>
+							<Properties/>
+						</v-card-text>
+					</v-tabs-window-item>
+					<v-tabs-window-item value="participants">
+						<v-card-text>
+							<Participants/>
+						</v-card-text>
+					</v-tabs-window-item>
+				</v-tabs-window>
+			</div>
+			<div v-else-if="!enableRtc">
+				<v-card-text>
+					<Properties/>
+				</v-card-text>
+			</div>
 		</v-card>
     </div>
 </template>
 
 <script setup lang="ts">
+import * as config from "../../configs/app.config.json";
 import { onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 import { useAppState, useConn } from "../state";
 import { useRouter } from "vue-router";
@@ -40,6 +48,8 @@ const router = useRouter();
 const isLoggedIn = ref(false);
 const isLoading = ref(true);
 const tab = ref("participants");
+const enableRtc = config.webRtcEnabled;
+let spaceConnection = conn.get();
 
 onBeforeMount(async () => {
 	if (state.csc && conn.get())
@@ -56,9 +66,9 @@ onBeforeMount(async () => {
 
 function stop()
 {
-	if (state.csc!)
+	if (state.csc)
 	{
-		state.csc!.exitSpace();
+		state.csc.exitSpace(spaceConnection);
 	}
 }
 

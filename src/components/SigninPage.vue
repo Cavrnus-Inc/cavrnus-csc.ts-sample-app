@@ -73,7 +73,7 @@ async function connectGuest()
 			enableRtc: true
 		};
 		state.csc = await initializeCsc(options);
-		await state.csc!.authenticateAsGuest(api.value, screenName.value);
+		await state.csc!.authenticateAsGuest(config.apiEndpoint, screenName.value);
 		conn.set(await state.csc!.joinSpace(roomId.value));
 
 		router.push({name: "configurator"});
@@ -95,7 +95,7 @@ async function connectUser()
 	try
 	{
 		const options: CscOptions = {
-			enableRtc: true
+			enableRtc: config.webRtcEnabled
 		};
 		state.csc = await initializeCsc(options);
 		await state.csc!.authenticateWithPassword(api.value, username.value, password.value);

@@ -1,7 +1,8 @@
 {
-    "apiEndpoint": "https://cavrnus.cavrn.us",
+    "apiEndpoint": "https://cav.dev.cavrn.us",
     "domain": "your-domain",
     "email": "",
     "password": "",
-"roomId": ""
+	"roomId": "",
+	"webRtcEnabled": false
 }
