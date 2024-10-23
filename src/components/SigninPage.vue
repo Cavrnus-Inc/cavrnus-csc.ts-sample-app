@@ -73,8 +73,8 @@ async function connectGuest()
 			enableRtc: true
 		};
 		state.csc = await initializeCsc(options);
-		await state.csc!.authenticateAsGuest(config.apiEndpoint, screenName.value);
-		conn.set(await state.csc!.joinSpace(roomId.value));
+		await state.csc.authenticateAsGuest(config.apiEndpoint, screenName.value);
+		conn.set(await state.csc.joinSpace(roomId.value));
 
 		router.push({name: "configurator"});
 	}
@@ -98,10 +98,8 @@ async function connectUser()
 			enableRtc: config.webRtcEnabled
 		};
 		state.csc = await initializeCsc(options);
-		await state.csc!.authenticateWithPassword(api.value, username.value, password.value);
-		conn.set(await state.csc!.joinSpace(roomId.value));
-
-		state.csc!.awaitLocalUser(conn.get());
+		await state.csc.authenticateWithPassword(api.value, username.value, password.value);
+		conn.set(await state.csc.joinSpace(roomId.value));
 		router.push({name: "configurator"});
 	}
 	catch (err)
