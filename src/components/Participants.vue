@@ -12,7 +12,7 @@
 					<v-btn flat @click="showInputDialog = !showInputDialog">Configure Inputs</v-btn>
 				</v-row>
 				<v-row row wrap class="d-flex align-center fill-height">
-					<v-col class="mb-4" cols="6" v-for="user of spaceUsers">
+					<v-col class="mb-4" cols="7" v-for="user of spaceUsers">
 						<Partcipant class="mr-4" :user="user" />
 					</v-col>
 				</v-row>
@@ -114,14 +114,18 @@ async function hookProperties()
 
 function updateVideoDevice(device: InputDevice)
 {
-	if (device)
-		state.csc?.updateVideoInput(device);
+	if (device && state.csc)
+	{
+		state.csc.updateVideoInput(device);
+	}
 }
 
 function updateAudioDevice(device: InputDevice)
 {
-	if (device)
-		state.csc?.updateAudioInput(device);
+	if (device && state.csc)
+	{
+		state.csc.updateAudioInput(device);
+	}
 }
 
 onBeforeUnmount(() => {

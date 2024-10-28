@@ -56,7 +56,7 @@ const username = ref("");
 const password = ref("");
 const screenName = ref("");
 const isBusy = ref(true);
-const tab = ref<string>("existingUser");
+const tab = ref<string>("guestUser");
 
 onMounted(async () => {
 	loadConfig();
@@ -70,11 +70,15 @@ async function connectGuest()
 	try
 	{
 		const options: CscOptions = {
-			enableRtc: true
+			enableRtc: config.webRtcEnabled
 		};
 		state.csc = await initializeCsc(options);
 		await state.csc.authenticateAsGuest(config.apiEndpoint, screenName.value);
-		conn.set(await state.csc.joinSpace(roomId.value));
+		const spaceConnection = await state.csc.joinSpace(roomId.value);
+		conn.set(spaceConnection);
+
+		if (config.webRtcEnabled)
+			state.csc.setLocalUserStreamingState(spaceConnection, true, false);
 
 		router.push({name: "configurator"});
 	}
@@ -99,7 +103,9 @@ async function connectUser()
 		};
 		state.csc = await initializeCsc(options);
 		await state.csc.authenticateWithPassword(api.value, username.value, password.value);
-		conn.set(await state.csc.joinSpace(roomId.value));
+		const spaceConnection = await state.csc.joinSpace(roomId.value);
+		conn.set(spaceConnection);
+
 		router.push({name: "configurator"});
 	}
 	catch (err)

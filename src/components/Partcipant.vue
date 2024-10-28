@@ -11,21 +11,20 @@
 			<v-row>
 				<v-switch v-model="isAudioMuted" @update:model-value="onUserMuteStateUpdated"></v-switch>
 			</v-row>
-			<v-row v-if="isSelf">
+			<v-row>
 				<span>Video muted: {{ isVideoMuted }}</span>
 			</v-row>
 			<v-row v-if="isSelf">
-				<v-switch v-model="isVideoMuted" @update:model-value="onUserStreamStateUpdated"></v-switch>
+				<v-switch v-model="isVideoMuted" @update:model-value="onUserVideoStateUpdated" :loading="isVideoLoading"></v-switch>
 			</v-row>
-			<v-row v-if="isVideoMuted">
-
-			</v-row>
+			<video :srcObject="videoStream" autoplay="autoplay" playsinline="playsinline" webkit-playsinline="webkit-playsinline" class="video-container">
+			</video>
 		</v-card-text>
 </v-card>
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, onBeforeUnmount, ref } from 'vue';
+import { onBeforeMount, onBeforeUnmount, ref, watch } from 'vue';
 import { useAppState, useConn } from '../state';
 import { Hook } from '@cavrnus/lib/V';
 import { CavrnusUser } from '@cavrnus/csc';
@@ -41,15 +40,18 @@ let spaceConnection = conn.get();
 
 const profilePicture = ref("");
 const username = ref("");
+const localConnectionId = ref("");
 const isAudioMuted = ref(false);
-const isVideoMuted = ref(false);
+const isVideoMuted = ref(true);
+const videoStream = ref<MediaStream>();
+const isVideoLoading = ref(false);
 const isSelf = ref(false);
 
 const hooks = ref<Hook[]>([]);
 
-onBeforeMount(async () => {
+onBeforeMount(async () => 
+{
 	await hookProperties();
-
 	isLoading.value = false;
 });
 
@@ -60,12 +62,27 @@ async function hookProperties()
 		if (spaceConnection && spaceConnection.session && state.csc)
 		{
 			if (props.user.isLocalUser)
+			{
+				const localUser = await spaceConnection.session.awaitLocalUser();
+				localConnectionId.value = localUser.connectionId;
 				isSelf.value = true;
+			}
 
-			hooks.value.push(state.csc!.bindUserName(spaceConnection, props.user, v => {username.value = v}));
-			hooks.value.push(state.csc!.bindProfilePic(spaceConnection, props.user, v => {profilePicture.value = v}));
-			hooks.value.push(state.csc!.bindUserMuted(spaceConnection, props.user, v => { isAudioMuted.value = v }));
-			hooks.value.push(state.csc!.bindUserStreaming(spaceConnection, props.user, v => { isVideoMuted.value = v }));
+			hooks.value.push(state.csc.bindUserName(spaceConnection, props.user, v => {username.value = v}));
+			hooks.value.push(state.csc.bindProfilePic(spaceConnection, props.user, v => {profilePicture.value = v}));
+			hooks.value.push(state.csc.bindUserMuted(spaceConnection, props.user, v => { isAudioMuted.value = v }));
+
+			if (isSelf.value)
+			{
+				console.log("Binding self")
+				hooks.value.push(state.csc.bindLocalUserVideoStream(v => { videoStream.value = v }));
+				hooks.value.push(state.csc.bindLocalUserVideoMuteState(v => { isVideoMuted.value = v }));
+			}
+			else
+			{
+				console.log("Binding other")
+				hooks.value.push(state.csc!.bindRemoteUserVideoStream(spaceConnection, props.user, v => { videoStream.value = v }));
+			}
 		}
 	}
 	catch (err)
@@ -73,11 +90,6 @@ async function hookProperties()
 		console.log(err);
 		throw err;
 	}
-}
-
-function getVideoStream()
-{
-	// return state.csc?.liveswitchService?.localMedia.
 }
 
 function onUserMuteStateUpdated(value: boolean | null)
@@ -91,13 +103,26 @@ function onUserMuteStateUpdated(value: boolean | null)
 	}
 }
 
-function onUserStreamStateUpdated(value: boolean | null)
+function onUserVideoStateUpdated(value: boolean | null)
 {
+	isVideoLoading.value = true;
 	if (state.csc && value !== null)
 	{
-		console.log("we're updating streaming state")
-		state.csc.setLocalUserStreamingState(spaceConnection, value, value);
+		// Check connectionId?
+		if (isSelf.value && localConnectionId.value === props.user.connectionId)
+		{
+			console.log("Setting presentationOn to ", false)
+			console.log("Setting cameraOn to ", !value);
+			state.csc.setLocalUserStreamingState(spaceConnection, !value, false); // This allows remote connection
+			state.csc.setLocalUserVideoMuteState(value); // This allows picture to be sent
+		}
+		else
+		{
+			// set remote user streaming state
+		}
 	}
+
+	isVideoLoading.value = false
 }
 
 function resolvePictureUrl(profilePicture: string | undefined)
@@ -138,5 +163,11 @@ onBeforeUnmount(() => {
 .card {
 	padding: 10px;
 	width: 720px;
+}
+
+.video-container
+{
+	width: 300px;
+	height: 300px;
 }
 </style>
