@@ -25,6 +25,7 @@
 					<v-card-text>
 						<span class="header mb-4">Join the Cavrnus Car Configurator Demo as a guest user:</span>
 						<v-col>
+							<v-text-field label="Api Endpoint" v-model="api" hint="Example: https://cav.dev.cavrn.us"></v-text-field>
 							<v-text-field label="Screen Name" v-model="screenName"></v-text-field>
 							<v-text-field label="Space ID" v-model="roomId"></v-text-field>
 						</v-col>

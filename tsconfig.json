@@ -1,5 +1,4 @@
 {
-	"extends": "../cavrnus-app/tsconfig.json",
 	"compilerOptions": {
 		"baseUrl": ".",
 		"moduleResolution": "node",

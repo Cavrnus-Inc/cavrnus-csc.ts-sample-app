@@ -1,7 +1,7 @@
 {
-    "apiEndpoint": "https://cav.dev.cavrn.us",
+    "apiEndpoint": "",
     "email": "",
     "password": "",
-	"roomId": "669bd7b6e3caa9d6ec9fe8f9",
+	"roomId": "",
 	"webRtcEnabled": false
 }
