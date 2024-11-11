@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { CavrnusFunctionLibrary } from "@cavrnus/csc/cavrnus-function-library";
+import { CavrnusFunctionLibrary } from "@cavrnus/csc";
 
 export const useAppState = defineStore("appState", {
 	state: () => ({

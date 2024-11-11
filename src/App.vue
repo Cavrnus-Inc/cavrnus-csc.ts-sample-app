@@ -9,17 +9,16 @@ import { onMounted, ref, watch } from 'vue'
 import { useAppState, useConn } from './state';
 import { useRouter } from 'vue-router';
 
-const state = useAppState();
 const router = useRouter();
 const conn = useConn();
 
-const connected = ref(conn.get() ?? false);
+const connected = ref(conn.get() ? true : false);
 
 onMounted(() => {
-	if (!connected.value)
-		router.push({name: "signin"});
+    if (!connected.value) {
+        router.push({name: "signin"});
+    }
 });
-
 watch(connected, () => {
 	router.push({name: "signin"});
 })

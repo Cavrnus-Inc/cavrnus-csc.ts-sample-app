@@ -8,7 +8,7 @@
 			<v-tabs-window v-model="tab">
 				<v-tabs-window-item value="existingUser">
 					<v-card-text>
-						<span class="header mb-4">Log into the Cavrnus Spatial Connector as an existing user:</span>
+						<span class="header mb-4">Join the Cavrnus Car Configurator Demo as an existing user:</span>
 						<v-col>
 							<v-text-field label="Api Endpoint" v-model="api"></v-text-field>
 							<v-text-field label="Username" v-model="username"></v-text-field>
@@ -23,7 +23,7 @@
 				</v-tabs-window-item>
 				<v-tabs-window-item value="guestUser">
 					<v-card-text>
-						<span class="header mb-4">Log into the Cavrnus Spatial Connector as a guest user:</span>
+						<span class="header mb-4">Join the Cavrnus Car Configurator Demo as a guest user:</span>
 						<v-col>
 							<v-text-field label="Screen Name" v-model="screenName"></v-text-field>
 							<v-text-field label="Space ID" v-model="roomId"></v-text-field>
@@ -75,6 +75,19 @@ async function connectGuest()
 		state.csc = await initializeCsc(options);
 		await state.csc.authenticateAsGuest(config.apiEndpoint, screenName.value);
 		const spaceConnection = await state.csc.joinSpace(roomId.value);
+
+        const handleDisconnect = (roomId: string, error?: Error) => {
+            console.log(`Disconnected from room ${roomId}`, error);
+            conn.set(undefined);
+            
+			state.csc!.offDisconnect(handleDisconnect);
+            state.csc = undefined;
+            
+            router.push({name: "disconnected"});
+        };
+
+        state.csc.onDisconnect(handleDisconnect);
+
 		conn.set(spaceConnection);
 
 		if (config.webRtcEnabled)

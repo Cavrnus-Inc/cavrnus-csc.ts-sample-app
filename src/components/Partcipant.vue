@@ -1,24 +1,32 @@
 <template>
-	<v-card class="d-flex align-center">
-		<v-img cover size="96" :src="resolvePictureUrl(profilePicture)"></v-img>
+	<v-card class="d-flex align-center pt-3 participant-card">
 		<v-card-text>
 			<v-row>
-				<b>{{ userProfileDisplayName(props.user) }}</b>
+				<div class="participant-name">{{ userProfileDisplayName(props.user) }}</div>
 			</v-row>
 			<v-row>
-				<span>Remote muted: {{ isAudioMuted }}</span>
+				<v-img v-if="isVideoMuted && isPresentationMuted" class="video-container" :src="resolvePictureUrl(profilePicture)"></v-img>
+				<video :srcObject="videoStream" v-else-if="!isVideoMuted" autoplay="autoplay" playsinline="playsinline" webkit-playsinline="webkit-playsinline" class="video-container">
+				</video>
+				<video :srcObject="presentationStream" v-else-if="!isPresentationMuted" autoplay="autoplay" playsinline="playsinline" webkit-playsinline="webkit-playsinline" class="video-container">
+				</video>
+			</v-row>
+			<v-row class="mt-4">
+				<v-col cols="6">
+					<v-btn variant="flat" class="btn" v-if="!isAudioMuted" @click="onUserMuteStateUpdated(true)">Mute Audio</v-btn>
+					<v-btn variant="flat" class="btn" :disabled="!isSelf && isAudioMuted" v-else-if="isAudioMuted" @click="onUserMuteStateUpdated(false)">Unmute Audio</v-btn>
+				</v-col>
+				<v-col cols="6">
+					<v-btn variant="flat" class="btn" :disabled="!isSelf" v-if="!isVideoMuted" @click="stopVideo">Mute Video</v-btn>
+					<v-btn variant="flat" class="btn" :disabled="!isSelf" v-else-if="isVideoMuted" @click="startVideo">Unmute Video</v-btn>
+				</v-col>
 			</v-row>
 			<v-row>
-				<v-switch v-model="isAudioMuted" @update:model-value="onUserMuteStateUpdated"></v-switch>
+				<v-col cols="6">
+					<v-btn variant="flat" class="btn" :disabled="!isSelf" v-if="!isPresentationMuted" @click="stopScreenShare">Stop Sharing Screen</v-btn>
+					<v-btn variant="flat" class="btn" :disabled="!isSelf" v-else-if="isPresentationMuted" @click="startScreenShare">Share Screen</v-btn>
+				</v-col>
 			</v-row>
-			<v-row>
-				<span>Video muted: {{ isVideoMuted }}</span>
-			</v-row>
-			<v-row v-if="isSelf">
-				<v-switch v-model="isVideoMuted" @update:model-value="onUserVideoStateUpdated" :loading="isVideoLoading"></v-switch>
-			</v-row>
-			<video :srcObject="videoStream" autoplay="autoplay" playsinline="playsinline" webkit-playsinline="webkit-playsinline" class="video-container">
-			</video>
 		</v-card-text>
 </v-card>
 </template>
@@ -43,7 +51,9 @@ const username = ref("");
 const localConnectionId = ref("");
 const isAudioMuted = ref(false);
 const isVideoMuted = ref(true);
+const isPresentationMuted = ref(true);
 const videoStream = ref<MediaStream>();
+const presentationStream = ref<MediaStream>();
 const isVideoLoading = ref(false);
 const isSelf = ref(false);
 
@@ -68,20 +78,24 @@ async function hookProperties()
 				isSelf.value = true;
 			}
 
+			state.csc.setLocalUserStreamingState(spaceConnection, false, false); // This allows remote connection
+
 			hooks.value.push(state.csc.bindUserName(spaceConnection, props.user, v => {username.value = v}));
 			hooks.value.push(state.csc.bindProfilePic(spaceConnection, props.user, v => {profilePicture.value = v}));
-			hooks.value.push(state.csc.bindUserMuted(spaceConnection, props.user, v => { isAudioMuted.value = v }));
 
 			if (isSelf.value)
 			{
-				console.log("Binding self")
+				hooks.value.push(state.csc.bindLocalUserPresentationStream(v => { presentationStream.value = v }));
 				hooks.value.push(state.csc.bindLocalUserVideoStream(v => { videoStream.value = v }));
 				hooks.value.push(state.csc.bindLocalUserVideoMuteState(v => { isVideoMuted.value = v }));
+				hooks.value.push(state.csc.bindLocalUserPresentationMuteState(v => { isPresentationMuted.value = v }));
+				hooks.value.push(state.csc.bindLocalUserMuteState(v => { isAudioMuted.value = v }));
 			}
 			else
 			{
-				console.log("Binding other")
-				hooks.value.push(state.csc!.bindRemoteUserVideoStream(spaceConnection, props.user, v => { videoStream.value = v }));
+				hooks.value.push(state.csc.bindRemoteUserVideoStream(spaceConnection, props.user, v => { videoStream.value = v }));
+				hooks.value.push(state.csc.bindRemoteUserStreamActive(spaceConnection, props.user, v => { isVideoMuted.value = !v }));
+				hooks.value.push(state.csc.bindUserMuted(spaceConnection, props.user, v => { isAudioMuted.value = v }));
 			}
 		}
 	}
@@ -92,37 +106,65 @@ async function hookProperties()
 	}
 }
 
-function onUserMuteStateUpdated(value: boolean | null)
+async function startScreenShare()
 {
-	if (state.csc && value !== null)
+	try
 	{
-		if (isSelf.value)
-			state.csc.setLocalUserMutedState(value);
-		else
-			state.csc.requestRemoteUserMute(spaceConnection, props.user.connectionId);
+		if (state.csc && spaceConnection)
+			await state.csc.startPresentation(spaceConnection);
+
+	} catch (error) {
+		console.error('Screen sharing cancelled or failed');
 	}
 }
 
-function onUserVideoStateUpdated(value: boolean | null)
+async function stopScreenShare()
 {
-	isVideoLoading.value = true;
-	if (state.csc && value !== null)
+	try 
 	{
-		// Check connectionId?
-		if (isSelf.value && localConnectionId.value === props.user.connectionId)
-		{
-			console.log("Setting presentationOn to ", false)
-			console.log("Setting cameraOn to ", !value);
-			state.csc.setLocalUserStreamingState(spaceConnection, !value, false); // This allows remote connection
-			state.csc.setLocalUserVideoMuteState(value); // This allows picture to be sent
-		}
-		else
-		{
-			// set remote user streaming state
-		}
+		if (state.csc && spaceConnection)
+			await state.csc.stopPresentation(spaceConnection)
+	} 
+	catch (error) {
+		console.error('Screen sharing cancelled or failed');
 	}
+}
 
-	isVideoLoading.value = false
+async function startVideo()
+{
+	try
+	{
+		if (state.csc && spaceConnection)
+			await state.csc.startVideo(spaceConnection);
+
+	} catch (error) {
+		console.error('Screen sharing cancelled or failed');
+	}
+}
+
+async function stopVideo()
+{
+	try 
+	{
+		if (state.csc && spaceConnection)
+			await state.csc.stopVideo(spaceConnection)
+	} 
+	catch (error) {
+		console.log('Screen sharing cancelled or failed');
+	}
+}
+
+function onUserMuteStateUpdated(value: boolean | null)
+{
+	if (state.csc && spaceConnection && value !== null)
+	{
+		if (isSelf.value)
+		{
+			state.csc.setLocalUserMutedState(value);
+		}
+		else if (!isAudioMuted.value)
+			state.csc.requestRemoteUserMute(spaceConnection, props.user.connectionId);
+	}
 }
 
 function resolvePictureUrl(profilePicture: string | undefined)
@@ -160,14 +202,30 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.card {
-	padding: 10px;
-	width: 720px;
+.participant {
+	max-height: 192px !important;
+	min-height: 96px !important;
+	width: 175px;
+}
+
+.participant-name
+{
+	font-weight: 400;
+	font-size: 16px;
 }
 
 .video-container
 {
-	width: 300px;
-	height: 300px;
+	display: table-row;
+	height: 96px !important;
+	max-width: unset !important;
+	padding: 0 !important;
+	position: relative;
+	width: 100%;
+}
+
+.btn {
+	color: gray;
+	text-transform: none;
 }
 </style>

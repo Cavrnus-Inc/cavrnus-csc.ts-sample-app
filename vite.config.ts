@@ -16,6 +16,10 @@ export default defineConfig({
       autoImport: true
     }),
   ],
+  build: {
+	outDir: "dist",
+	emptyOutDir: true
+  },
   define: { "process.env": {} },
   resolve: {
     extensions: [

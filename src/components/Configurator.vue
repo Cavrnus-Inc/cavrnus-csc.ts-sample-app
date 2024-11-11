@@ -6,7 +6,7 @@
 			</div>
 		</v-main>
 
-		<v-card class="card" v-if="!isLoading">
+		<v-card class="card" v-if="!isLoading && !state.csc?.error">
 			<div v-if="enableRtc">
 				<v-tabs v-model="tab">
 					<v-tab value="participants">Participants</v-tab>
@@ -31,6 +31,9 @@
 				</v-card-text>
 			</div>
 		</v-card>
+		<v-card v-else-if="!isLoading && state.csc?.error">
+			<div>ERROR</div>
+		</v-card>
     </div>
 </template>
 
@@ -52,7 +55,7 @@ const enableRtc = config.webRtcEnabled;
 let spaceConnection = conn.get();
 
 onBeforeMount(async () => {
-	if (state.csc && conn.get())
+	if (state.csc && conn.get() && spaceConnection)
 	{
 		isLoggedIn.value = state.csc.isLoggedIn();
 	}
@@ -66,7 +69,7 @@ onBeforeMount(async () => {
 
 function stop()
 {
-	if (state.csc)
+	if (state.csc && spaceConnection)
 	{
 		state.csc.exitSpace(spaceConnection);
 	}

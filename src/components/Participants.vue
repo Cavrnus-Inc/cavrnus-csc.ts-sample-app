@@ -12,7 +12,7 @@
 					<v-btn flat @click="showInputDialog = !showInputDialog">Configure Inputs</v-btn>
 				</v-row>
 				<v-row row wrap class="d-flex align-center fill-height">
-					<v-col class="mb-4" cols="7" v-for="user of spaceUsers">
+					<v-col class="mb-4" cols="6" v-for="user of spaceUsers" :key="user.connectionId">
 						<Partcipant class="mr-4" :user="user" />
 					</v-col>
 				</v-row>
@@ -99,7 +99,7 @@ async function hookProperties()
 	{
 		if (spaceConnection && state.csc)
 		{
-			hooks.value.push(state.csc!.bindSpaceUsers(spaceConnection, v => {spaceUsers.value.push(v);}, v => {spaceUsers.value.splice(spaceUsers.value.indexOf(v), 1);}));
+			hooks.value.push(state.csc!.bindSpaceUsers(spaceConnection, v => onSpaceUsersUpdated(v), v => {spaceUsers.value.splice(spaceUsers.value.indexOf(v), 1);}));
 			hooks.value.push(state.csc!.bindAudioInputs(v => {audioDevices.value = v}));
 			hooks.value.push(state.csc!.bindVideoInputs(v => {videoDevices.value = v}));
 			hooks.value.push(state.csc!.bindVideoInput(v => {videoDevice.value = v}));
@@ -110,6 +110,14 @@ async function hookProperties()
 	{
 		console.log(err);
 	}
+}
+
+function onSpaceUsersUpdated(v: CavrnusUser)
+{
+	if (v.isLocalUser)
+		spaceUsers.value.unshift(v);
+	else
+		spaceUsers.value.push(v);
 }
 
 function updateVideoDevice(device: InputDevice)
