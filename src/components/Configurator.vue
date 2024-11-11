@@ -7,7 +7,7 @@
 		</v-main>
 
 		<v-card class="card" v-if="!isLoading && !state.csc?.error">
-			<div v-if="enableRtc">
+			<div v-if="state.webRtcEnabled">
 				<v-tabs v-model="tab">
 					<v-tab value="participants">Participants</v-tab>
 					<v-tab value="properties">Properties</v-tab>
@@ -25,7 +25,7 @@
 					</v-tabs-window-item>
 				</v-tabs-window>
 			</div>
-			<div v-else-if="!enableRtc">
+			<div v-else-if="!state.webRtcEnabled">
 				<v-card-text>
 					<Properties/>
 				</v-card-text>
@@ -51,7 +51,6 @@ const router = useRouter();
 const isLoggedIn = ref(false);
 const isLoading = ref(true);
 const tab = ref("participants");
-const enableRtc = config.webRtcEnabled;
 let spaceConnection = conn.get();
 
 onBeforeMount(async () => {

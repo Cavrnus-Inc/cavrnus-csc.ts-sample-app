@@ -10,10 +10,11 @@
 					<v-card-text>
 						<span class="header mb-4">Join the Cavrnus Car Configurator Demo as an existing user:</span>
 						<v-col>
-							<v-text-field label="Api Endpoint" v-model="api"></v-text-field>
+							<v-text-field label="Api Endpoint" v-model="api" hint="Example: https://cav.dev.cavrn.us"></v-text-field>
 							<v-text-field label="Username" v-model="username"></v-text-field>
 							<v-text-field label="Password" v-model="password" type="password"></v-text-field>
 							<v-text-field label="Space ID" v-model="roomId"></v-text-field>
+							<v-switch v-model="enableRtc" :label="enableRtc ? 'WebRTC Enabled' : 'WebRTC Disabled'"></v-switch>
 						</v-col>
 						<v-row no-gutters>
 							<v-spacer/>
@@ -28,6 +29,7 @@
 							<v-text-field label="Api Endpoint" v-model="api" hint="Example: https://cav.dev.cavrn.us"></v-text-field>
 							<v-text-field label="Screen Name" v-model="screenName"></v-text-field>
 							<v-text-field label="Space ID" v-model="roomId"></v-text-field>
+							<v-switch v-model="enableRtc" :label="enableRtc ? 'WebRTC Enabled' : 'WebRTC Disabled'" color="primary"></v-switch>
 						</v-col>
 						<v-row no-gutters>
 							<v-spacer/>
@@ -56,6 +58,7 @@ const api = ref("");
 const username = ref("");
 const password = ref("");
 const screenName = ref("");
+const enableRtc = ref(config.webRtcEnabled);
 const isBusy = ref(true);
 const tab = ref<string>("guestUser");
 
@@ -70,10 +73,14 @@ async function connectGuest()
 
 	try
 	{
+		console.log("WebRTC enabled is: ", enableRtc.value)
 		const options: CscOptions = {
-			enableRtc: config.webRtcEnabled
+			enableRtc: enableRtc.value
 		};
+		
+		state.webRtcEnabled = enableRtc.value;
 		state.csc = await initializeCsc(options);
+
 		await state.csc.authenticateAsGuest(config.apiEndpoint, screenName.value);
 		const spaceConnection = await state.csc.joinSpace(roomId.value);
 
@@ -81,7 +88,7 @@ async function connectGuest()
             console.log(`Disconnected from room ${roomId}`, error);
             conn.set(undefined);
             
-			state.csc!.offDisconnect(handleDisconnect);
+			state.csc.offDisconnect(handleDisconnect);
             state.csc = undefined;
             
             router.push({name: "disconnected"});
@@ -112,10 +119,14 @@ async function connectUser()
 
 	try
 	{
+		console.log("WebRTC enabled is: ", enableRtc.value)
 		const options: CscOptions = {
-			enableRtc: config.webRtcEnabled
+			enableRtc: enableRtc.value
 		};
+
+		state.webRtcEnabled = enableRtc.value;
 		state.csc = await initializeCsc(options);
+
 		await state.csc.authenticateWithPassword(api.value, username.value, password.value);
 		const spaceConnection = await state.csc.joinSpace(roomId.value);
 		conn.set(spaceConnection);

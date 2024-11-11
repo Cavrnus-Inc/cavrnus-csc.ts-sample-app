@@ -3,6 +3,7 @@ import { CavrnusFunctionLibrary } from "@cavrnus/csc";
 
 export const useAppState = defineStore("appState", {
 	state: () => ({
-		csc: undefined as CavrnusFunctionLibrary | undefined
+		csc: undefined as CavrnusFunctionLibrary | undefined,
+		webRtcEnabled: false
 	})
 })
