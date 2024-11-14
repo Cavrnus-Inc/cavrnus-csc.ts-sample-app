@@ -5,9 +5,12 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true
+		"allowSyntheticDefaultImports": true,
+		"noEmit": true,          // Override the base config
+        "declaration": false,     // Override the base config
+        "declarationMap": false 
 	},
 	"include": [
 		"src"
-	]
+	],
 }
