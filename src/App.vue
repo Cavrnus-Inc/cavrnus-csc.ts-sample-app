@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { useAppState, useConn } from './state';
+import { useConn } from './state';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -26,6 +26,6 @@ watch(connected, () => {
 
 <style scoped>
 .background {
-	background-color: #D3D4D8 !important;
+	/* background-color: #D3D4D8 !important; */
 }
 </style>

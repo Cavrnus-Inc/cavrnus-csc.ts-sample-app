@@ -1,38 +1,82 @@
 <template>
-	<v-card class="d-flex align-center pt-3 participant-card">
-		<v-card-text>
-			<v-row>
-				<div class="participant-name">{{ userProfileDisplayName(props.user) }}</div>
-			</v-row>
-			<v-row>
-				<v-img v-if="isVideoMuted && isPresentationMuted" class="video-container" :src="resolvePictureUrl(profilePicture)"></v-img>
-				<video :srcObject="videoStream" v-else-if="!isVideoMuted" autoplay="autoplay" playsinline="playsinline" webkit-playsinline="webkit-playsinline" class="video-container">
-				</video>
-				<video :srcObject="presentationStream" v-else-if="!isPresentationMuted" autoplay="autoplay" playsinline="playsinline" webkit-playsinline="webkit-playsinline" class="video-container">
-				</video>
-			</v-row>
-			<v-row class="mt-4">
-				<v-col cols="6">
-					<v-btn variant="flat" class="btn" v-if="!isAudioMuted" @click="onUserMuteStateUpdated(true)">Mute Audio</v-btn>
-					<v-btn variant="flat" class="btn" :disabled="!isSelf && isAudioMuted" v-else-if="isAudioMuted" @click="onUserMuteStateUpdated(false)">Unmute Audio</v-btn>
-				</v-col>
-				<v-col cols="6">
-					<v-btn variant="flat" class="btn" :disabled="!isSelf" v-if="!isVideoMuted" @click="stopVideo">Mute Video</v-btn>
-					<v-btn variant="flat" class="btn" :disabled="!isSelf" v-else-if="isVideoMuted" @click="startVideo">Unmute Video</v-btn>
-				</v-col>
-			</v-row>
-			<v-row>
-				<v-col cols="6">
-					<v-btn variant="flat" class="btn" :disabled="!isSelf" v-if="!isPresentationMuted" @click="stopScreenShare">Stop Sharing Screen</v-btn>
-					<v-btn variant="flat" class="btn" :disabled="!isSelf" v-else-if="isPresentationMuted" @click="startScreenShare">Share Screen</v-btn>
-				</v-col>
-			</v-row>
-		</v-card-text>
-</v-card>
+	<v-card class="position-relative participant-card overflow-hidden">
+		<div class="position-relative h-100">
+			<v-img v-if="isVideoMuted && isPresentationMuted"
+				class="video-container"
+				aspect-ratio="1.33"
+				:src="resolvePictureUrl(profilePicture)"
+				cover
+			></v-img>
+		
+			<video v-else-if="!isVideoMuted"
+				:srcObject="videoStream"
+				autoplay="autoplay"
+				playsinline="playsinline"
+				webkit-playsinline="webkit-playsinline"
+				class="video-container"
+			></video>
+		
+			<video v-else-if="!isPresentationMuted"
+				:srcObject="presentationStream"
+				autoplay="autoplay"
+				playsinline="playsinline"
+				webkit-playsinline="webkit-playsinline"
+				class="video-container"
+			></video>
+
+			<div class="overlay-container">
+				<v-toolbar density="compact" color="rgba(0, 0, 0, 0.5)" flat class="px-2">
+					<div class="participant-name text-white">
+						{{ userProfileDisplayName(props.user) }}
+					</div>
+				</v-toolbar>
+
+				<div class="control-overlay pa-2 bg-black bg-opacity-50">
+					<div class="d-flex justify-center align-center">
+						<v-btn
+							icon
+							size="small"
+							:disabled="!isSelf && isAudioMuted"
+							:color="isAudioMuted ? 'error' : 'white'"
+							class="mx-1"
+							@click="onUserMuteStateUpdated(!isAudioMuted)"
+						>
+							<v-icon icon="mdi-microphone-off" v-if="isAudioMuted"></v-icon>
+							<v-icon icon="mdi-microphone" v-else></v-icon>
+						</v-btn>
+
+						<v-btn
+							icon
+							size="small"
+							:disabled="!isSelf"
+							:color="isVideoMuted ? 'error' : 'white'"
+							class="mx-1"
+							@click="isVideoMuted ? startVideo() : stopVideo()"
+						>
+							<v-icon icon="mdi-video-off" v-if="isVideoMuted"></v-icon>
+							<v-icon icon="mdi-video" v-else></v-icon>
+						</v-btn>
+
+						<v-btn
+							icon
+							size="small"
+							:disabled="!isSelf"
+							:color="isPresentationMuted ? 'error' : 'white'"
+							class="mx-1"
+							@click="isPresentationMuted ? startScreenShare() : stopScreenShare()"
+						>
+							<v-icon icon="mdi-monitor-off" v-if="isPresentationMuted"></v-icon>
+							<v-icon icon="mdi-monitor-share" v-else></v-icon>
+						</v-btn>
+					</div>
+				</div>
+			</div>
+		</div>
+	</v-card>
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeMount, onBeforeUnmount, ref } from 'vue';
 import { useAppState, useConn } from '../state';
 import { Hook } from '@cavrnus/lib/V';
 import { CavrnusUser } from '@cavrnus/csc';
@@ -54,7 +98,6 @@ const isVideoMuted = ref(true);
 const isPresentationMuted = ref(true);
 const videoStream = ref<MediaStream>();
 const presentationStream = ref<MediaStream>();
-const isVideoLoading = ref(false);
 const isSelf = ref(false);
 
 const hooks = ref<Hook[]>([]);
@@ -205,7 +248,7 @@ onBeforeUnmount(() => {
 .participant {
 	max-height: 192px !important;
 	min-height: 96px !important;
-	width: 175px;
+	width: 175px !important;
 }
 
 .participant-name
@@ -216,16 +259,42 @@ onBeforeUnmount(() => {
 
 .video-container
 {
-	display: table-row;
-	height: 96px !important;
+	height: 180px !important;
 	max-width: unset !important;
 	padding: 0 !important;
 	position: relative;
 	width: 100%;
 }
 
-.btn {
-	color: gray;
-	text-transform: none;
+.icon 
+{
+	z-index: 1;
+	color: black;
+	height: 10px;
+	width: 10px;
+}
+
+.control-overlay 
+{
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transition: opacity 0.2s;
+}
+
+.participant-card
+{
+	width: 100%;
+}
+
+.participant-card:hover .control-overlay 
+{
+  opacity: 1;
+}
+
+.participant-card .control-overlay 
+{
+  opacity: 0;
 }
 </style>

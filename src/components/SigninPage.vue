@@ -47,7 +47,8 @@ import { onMounted, ref, watch } from "vue"
 import * as config from "../../configs/app.config.json";
 import { useAppState, useConn } from "../state";
 import { useRouter } from "vue-router";
-import { CscOptions, initializeCsc } from "@cavrnus/csc";
+import { CavrnusSpaceConnection, CscOptions, initializeCsc } from "@cavrnus/csc";
+import { toast } from 'vue3-toastify';
 
 const state = useAppState();
 const router = useRouter();
@@ -61,11 +62,22 @@ const screenName = ref("");
 const enableRtc = ref(config.webRtcEnabled);
 const isBusy = ref(true);
 const tab = ref<string>("guestUser");
+let connection: CavrnusSpaceConnection = undefined;
 
 onMounted(async () => {
 	loadConfig();
 	isBusy.value = false;
 });
+
+const handleDisconnect = (roomId: string, error?: Error) => {
+	console.log(`Disconnected from room ${roomId}`, error);
+	conn.set(undefined);
+	
+	state.csc.offDisconnect(handleDisconnect); // Connect csc entirely
+	state.csc = undefined;
+	
+	router.push({name: "disconnected"});
+};
 
 async function connectGuest()
 {
@@ -73,38 +85,30 @@ async function connectGuest()
 
 	try
 	{
-		console.log("WebRTC enabled is: ", enableRtc.value)
 		const options: CscOptions = {
 			enableRtc: enableRtc.value
 		};
 		
-		state.webRtcEnabled = enableRtc.value;
 		state.csc = await initializeCsc(options);
 
 		await state.csc.authenticateAsGuest(config.apiEndpoint, screenName.value);
 		const spaceConnection = await state.csc.joinSpace(roomId.value);
-
-        const handleDisconnect = (roomId: string, error?: Error) => {
-            console.log(`Disconnected from room ${roomId}`, error);
-            conn.set(undefined);
-            
-			state.csc.offDisconnect(handleDisconnect);
-            state.csc = undefined;
-            
-            router.push({name: "disconnected"});
-        };
+		connection = spaceConnection;
+		
+		state.webRtcEnabled = enableRtc.value;
 
         state.csc.onDisconnect(handleDisconnect);
 
 		conn.set(spaceConnection);
 
 		if (config.webRtcEnabled)
-			state.csc.setLocalUserStreamingState(spaceConnection, true, false);
+			state.csc.setLocalUserStreamingState(spaceConnection, false, false);
 
 		router.push({name: "configurator"});
 	}
 	catch (err)
 	{
+		handleAuthError();
 		throw err;
 	}
 	finally
@@ -135,6 +139,7 @@ async function connectUser()
 	}
 	catch (err)
 	{
+		handleAuthError();
 		throw err;
 	}
 	finally
@@ -143,12 +148,22 @@ async function connectUser()
 	}
 }
 
+async function handleAuthError()
+{
+	if (connection)
+		await state.csc.exitSpace(connection);
+
+	conn.set(undefined);
+	state.csc = undefined;
+	toast.error("Error connecting to Cavrnus Car Configurator");
+}
+
 function loadConfig()
 {
 	api.value = config.apiEndpoint;
 	roomId.value = config.roomId;
 
-	// for local testing
+	// for ease of local testing
 	if (config.roomId)
 	{
 		username.value = config.email;

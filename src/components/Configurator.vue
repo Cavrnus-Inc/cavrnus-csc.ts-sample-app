@@ -1,66 +1,56 @@
 <template>
-    <div class="d-flex align-center justify-center fill-height">
-		<v-main class="d-flex align-top justify-center" v-if="isLoading">
-			<div>
-				<v-progress-circular indeterminate></v-progress-circular>
+	<v-layout>
+		<Header></Header>
+
+		<v-main class="container">
+			<div class="d-flex fill-height" v-if="isLoading">
+				<div class="d-flex align-top justify-center">
+					<v-progress-circular indeterminate></v-progress-circular>
+				</div>
+			</div>
+
+			<div v-else>
+				<v-row no-gutters>
+					<v-col cols="7">
+						<Properties />
+					</v-col>
+					<v-col cols="3"></v-col>
+					<v-col cols="2">
+						<Participants/>
+					</v-col>
+				</v-row>
 			</div>
 		</v-main>
-
-		<v-card class="card" v-if="!isLoading && !state.csc?.error">
-			<div v-if="state.webRtcEnabled">
-				<v-tabs v-model="tab">
-					<v-tab value="participants">Participants</v-tab>
-					<v-tab value="properties">Properties</v-tab>
-				</v-tabs>
-				<v-tabs-window v-model="tab">
-					<v-tabs-window-item value="properties">
-						<v-card-text>
-							<Properties/>
-						</v-card-text>
-					</v-tabs-window-item>
-					<v-tabs-window-item value="participants">
-						<v-card-text>
-							<Participants/>
-						</v-card-text>
-					</v-tabs-window-item>
-				</v-tabs-window>
-			</div>
-			<div v-else-if="!state.webRtcEnabled">
-				<v-card-text>
-					<Properties/>
-				</v-card-text>
-			</div>
-		</v-card>
-		<v-card v-else-if="!isLoading && state.csc?.error">
-			<div>ERROR</div>
-		</v-card>
-    </div>
+	</v-layout>
 </template>
 
 <script setup lang="ts">
-import * as config from "../../configs/app.config.json";
 import { onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 import { useAppState, useConn } from "../state";
 import { useRouter } from "vue-router";
 import Properties from "./Properties.vue";
 import Participants from "./Participants.vue";
+import Header from "./Header.vue";
 
 const state = useAppState();
 const conn = useConn();
 const router = useRouter();
 const isLoggedIn = ref(false);
 const isLoading = ref(true);
-const tab = ref("participants");
 let spaceConnection = conn.get();
+const roomName = ref("");
 
 onBeforeMount(async () => {
 	if (state.csc && conn.get() && spaceConnection)
 	{
 		isLoggedIn.value = state.csc.isLoggedIn();
+
+		if (spaceConnection.session && spaceConnection.session.roomMetadata.get())
+			roomName.value = spaceConnection.session.roomMetadata.get().name;
 	}
 	else
 	{
-		router.push({name: "signin"});
+		router.push({ name: "signin" });
 	}
 
 	isLoading.value = false;
@@ -68,8 +58,7 @@ onBeforeMount(async () => {
 
 function stop()
 {
-	if (state.csc && spaceConnection)
-	{
+	if (state.csc && spaceConnection) {
 		state.csc.exitSpace(spaceConnection);
 	}
 }
@@ -88,7 +77,7 @@ onBeforeUnmount(() => {
 
 watch(isLoggedIn, () => {
 	if (!isLoggedIn.value)
-		router.push({name: "signin"});
+		router.push({ name: "signin" });
 });
 
 </script>
@@ -97,4 +86,9 @@ watch(isLoggedIn, () => {
 .card {
 	width: 720px;
 }
-</style>../services/csc
+
+.container {
+	padding-left: 20px;
+	padding-right: 20px;
+}
+</style>

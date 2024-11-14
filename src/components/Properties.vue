@@ -1,5 +1,5 @@
-<template>
-    <div class="fill-height">
+<template class="pa-4">
+    <div class="fill-height pa-4">
 		<v-main class="d-flex align-top justify-center" v-if="isLoading">
 			<div>
 				<v-progress-circular indeterminate></v-progress-circular>

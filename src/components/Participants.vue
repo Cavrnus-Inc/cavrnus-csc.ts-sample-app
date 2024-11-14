@@ -1,68 +1,27 @@
 <template>
-    <div class="fill-height">
+    <div class="fill-height pa-4">
 		<v-main class="d-flex align-top justify-center" v-if="isLoading">
 			<div>
 				<v-progress-circular indeterminate></v-progress-circular>
 			</div>
 		</v-main>
 		<div v-if="!isLoading">
-			<div>
+			<div class="participants-container overflow-x-hidden">
 				<v-row>
-					<v-spacer/>
-					<v-btn flat @click="showInputDialog = !showInputDialog">Configure Inputs</v-btn>
-				</v-row>
-				<v-row row wrap class="d-flex align-center fill-height">
-					<v-col class="mb-4" cols="6" v-for="user of spaceUsers" :key="user.connectionId">
-						<Partcipant class="mr-4" :user="user" />
+					<v-col 
+						cols="12" 
+						class="pa-2"
+						v-for="user of spaceUsers" 
+						:key="user.connectionId"
+					>
+						<div style="width: 400px;" class="mx-auto w-100">
+							<Partcipant :user="user" />
+						</div>
 					</v-col>
 				</v-row>
 			</div>
 		</div>
     </div>
-	<v-dialog v-model="showInputDialog" width="400">
-		<v-card class="d-flex align-top justify-center dialog pt-4">
-			<v-card-text>
-				<v-row align="center">
-					<v-col>
-						Audio
-					</v-col>
-					<v-col cols="8">
-						<v-select 
-							:items="audioDevices" 
-							v-model="audioDevice" 
-							@update:model-value="updateAudioDevice" 
-							item-value="id" 
-							return-object 
-							item-title="name" 
-							variant="solo" 
-							hide-details>
-						</v-select>
-					</v-col>
-				</v-row>
-				<v-row align="center">
-					<v-col>
-						Video
-					</v-col>
-					<v-col cols="8">
-						<v-select 
-							:items="videoDevices" 
-							v-model="videoDevice" 
-							@update:model-value="updateVideoDevice" 
-							item-value="id" 
-							return-object 
-							item-title="name" 
-							variant="solo" 
-							hide-details>
-						</v-select>
-					</v-col>
-				</v-row>
-			</v-card-text>
-			<v-card-actions>
-				<v-spacer/>
-				<v-btn flat @click="showInputDialog = !showInputDialog">Done</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -70,20 +29,13 @@ import { onBeforeMount, onBeforeUnmount, ref } from 'vue';
 import { useAppState, useConn } from '../state';
 import { CavrnusUser, Hook } from '@cavrnus/csc';
 import Partcipant from './Partcipant.vue';
-import { InputDevice } from '@cavrnus/webrtc';
 
 const state = useAppState();
 const conn = useConn();
 const isLoading = ref(true);
 const spaceConnection = conn.get();
-const showInputDialog = ref(false);
 
 const hooks = ref<Hook[]>([]);
-const audioDevices = ref<InputDevice[]>([]);
-const videoDevices = ref<InputDevice[]>([]);
-
-const audioDevice = ref<InputDevice>();
-const videoDevice = ref<InputDevice>();
 
 const spaceUsers = ref<CavrnusUser[]>([]);
 
@@ -98,13 +50,7 @@ async function hookProperties()
 	try
 	{
 		if (spaceConnection && state.csc)
-		{
 			hooks.value.push(state.csc!.bindSpaceUsers(spaceConnection, v => onSpaceUsersUpdated(v), v => {spaceUsers.value.splice(spaceUsers.value.indexOf(v), 1);}));
-			hooks.value.push(state.csc!.bindAudioInputs(v => {audioDevices.value = v}));
-			hooks.value.push(state.csc!.bindVideoInputs(v => {videoDevices.value = v}));
-			hooks.value.push(state.csc!.bindVideoInput(v => {videoDevice.value = v}));
-			hooks.value.push(state.csc!.bindAudioInput(v => {audioDevice.value = v}));
-		}
 	}
 	catch (err)
 	{
@@ -118,22 +64,6 @@ function onSpaceUsersUpdated(v: CavrnusUser)
 		spaceUsers.value.unshift(v);
 	else
 		spaceUsers.value.push(v);
-}
-
-function updateVideoDevice(device: InputDevice)
-{
-	if (device && state.csc)
-	{
-		state.csc.updateVideoInput(device);
-	}
-}
-
-function updateAudioDevice(device: InputDevice)
-{
-	if (device && state.csc)
-	{
-		state.csc.updateAudioInput(device);
-	}
 }
 
 onBeforeUnmount(() => {
@@ -154,5 +84,23 @@ onBeforeUnmount(() => {
 .card {
 	padding: 10px;
 	width: 720px;
+}
+
+.participants-container {
+  height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+
+.participants-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.participants-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.participants-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
 }
 </style>

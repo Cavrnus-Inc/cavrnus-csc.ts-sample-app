@@ -1,5 +1,10 @@
 import { createApp } from 'vue'
+
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
+import '@mdi/font/css/materialdesignicons.css' 
+
+import Vue3Toastify from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
 
 // Vuetify
 import 'vuetify/styles'
@@ -28,4 +33,7 @@ const vuetify = createVuetify({
 	  },
 });
 
-createApp(App).use(vuetify).use(router).use(pinia).mount('#app');
+createApp(App).use(vuetify).use(router).use(pinia).use(Vue3Toastify, {
+	autoClose: 3000,
+	position: "top-right"
+  }).mount('#app');
