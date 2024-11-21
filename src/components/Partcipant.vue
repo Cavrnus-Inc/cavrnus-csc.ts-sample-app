@@ -10,16 +10,16 @@
 		
 			<video v-else-if="!isVideoMuted"
 				:srcObject="videoStream"
-				autoplay="autoplay"
-				playsinline="playsinline"
+				autoplay="true"
+				playsinline="true"
 				webkit-playsinline="webkit-playsinline"
 				class="video-container"
 			></video>
 		
 			<video v-else-if="!isPresentationMuted"
 				:srcObject="presentationStream"
-				autoplay="autoplay"
-				playsinline="playsinline"
+				autoplay="true"
+				playsinline="true"
 				webkit-playsinline="webkit-playsinline"
 				class="video-container"
 			></video>
@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, onBeforeUnmount, ref } from 'vue';
+import { onBeforeMount, onBeforeUnmount, ref, watch } from 'vue';
 import { useAppState, useConn } from '../state';
 import { Hook } from '@cavrnus/lib/V';
 import { CavrnusUser } from '@cavrnus/csc';
@@ -116,27 +116,33 @@ async function hookProperties()
 		{
 			if (props.user.isLocalUser)
 			{
+				state.csc.setLocalUserStreamingState(spaceConnection, false, false); // This allows remote connection
+
 				const localUser = await spaceConnection.session.awaitLocalUser();
 				localConnectionId.value = localUser.connectionId;
 				isSelf.value = true;
 			}
 
-			state.csc.setLocalUserStreamingState(spaceConnection, false, false); // This allows remote connection
-
 			hooks.value.push(state.csc.bindUserName(spaceConnection, props.user, v => {username.value = v}));
 			hooks.value.push(state.csc.bindProfilePic(spaceConnection, props.user, v => {profilePicture.value = v}));
-
 			if (isSelf.value)
 			{
 				hooks.value.push(state.csc.bindLocalUserPresentationStream(v => { presentationStream.value = v }));
-				hooks.value.push(state.csc.bindLocalUserVideoStream(v => { videoStream.value = v }));
-				hooks.value.push(state.csc.bindLocalUserVideoMuteState(v => { isVideoMuted.value = v }));
-				hooks.value.push(state.csc.bindLocalUserPresentationMuteState(v => { isPresentationMuted.value = v }));
+				hooks.value.push(state.csc.bindLocalUserVideoStream(v => { videoStream.value = v; }));
+				hooks.value.push(state.csc.bindLocalUserVideoMuteState(v => { 
+					isVideoMuted.value = v; 
+					spaceConnection.session.users.notifyLocalUserStreamStateChanged(!v, !isPresentationMuted.value);
+				}));
+				hooks.value.push(state.csc.bindLocalUserPresentationMuteState(v => { 
+					isPresentationMuted.value = v 
+					spaceConnection.session.users.notifyLocalUserStreamStateChanged(!isVideoMuted, !v);
+					
+				}));
 				hooks.value.push(state.csc.bindLocalUserMuteState(v => { isAudioMuted.value = v }));
 			}
 			else
 			{
-				hooks.value.push(state.csc.bindRemoteUserVideoStream(spaceConnection, props.user, v => { videoStream.value = v }));
+				hooks.value.push(state.csc.bindRemoteUserVideoStream(spaceConnection, props.user, v => { videoStream.value = v; }));
 				hooks.value.push(state.csc.bindRemoteUserStreamActive(spaceConnection, props.user, v => { isVideoMuted.value = !v }));
 				hooks.value.push(state.csc.bindUserMuted(spaceConnection, props.user, v => { isAudioMuted.value = v }));
 			}
@@ -153,8 +159,8 @@ async function startScreenShare()
 {
 	try
 	{
-		if (state.csc && spaceConnection)
-			await state.csc.startPresentation(spaceConnection);
+		if (state.csc)
+			await state.csc.startPresentation();
 
 	} catch (error) {
 		console.error('Screen sharing cancelled or failed');
@@ -165,8 +171,8 @@ async function stopScreenShare()
 {
 	try 
 	{
-		if (state.csc && spaceConnection)
-			await state.csc.stopPresentation(spaceConnection)
+		if (state.csc)
+			await state.csc.stopPresentation()
 	} 
 	catch (error) {
 		console.error('Screen sharing cancelled or failed');
@@ -177,8 +183,8 @@ async function startVideo()
 {
 	try
 	{
-		if (state.csc && spaceConnection)
-			await state.csc.startVideo(spaceConnection);
+		if (state.csc)
+			await state.csc.startVideo();
 
 	} catch (error) {
 		console.error('Screen sharing cancelled or failed');
@@ -189,8 +195,8 @@ async function stopVideo()
 {
 	try 
 	{
-		if (state.csc && spaceConnection)
-			await state.csc.stopVideo(spaceConnection)
+		if (state.csc)
+			await state.csc.stopVideo();
 	} 
 	catch (error) {
 		console.log('Screen sharing cancelled or failed');

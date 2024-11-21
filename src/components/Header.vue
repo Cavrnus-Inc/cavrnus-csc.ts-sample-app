@@ -56,7 +56,7 @@
 import { onBeforeMount, onBeforeUnmount, ref } from "vue";
 import { useAppState, useConn } from "../state";
 import { Hook } from "@cavrnus/csc/cavrnus-function-library";
-import { InputDevice } from "@cavrnus/webrtc/rtc";
+import { InputDevice } from "@cavrnus/csc";
 
 const state = useAppState();
 const conn = useConn();

@@ -88,6 +88,7 @@ onBeforeUnmount(() => {
 
 .participants-container {
   height: calc(100vh - 96px);
+  width: 250px;
   overflow-y: auto;
 }
 

@@ -14,7 +14,7 @@
 							<v-text-field label="Username" v-model="username"></v-text-field>
 							<v-text-field label="Password" v-model="password" type="password"></v-text-field>
 							<v-text-field label="Space ID" v-model="roomId"></v-text-field>
-							<v-switch v-model="enableRtc" :label="enableRtc ? 'WebRTC Enabled' : 'WebRTC Disabled'"></v-switch>
+							<!-- <v-switch v-model="enableRtc" :label="enableRtc ? 'WebRTC Enabled' : 'WebRTC Disabled'"></v-switch> -->
 						</v-col>
 						<v-row no-gutters>
 							<v-spacer/>
@@ -29,7 +29,7 @@
 							<v-text-field label="Api Endpoint" v-model="api" hint="Example: https://cav.dev.cavrn.us"></v-text-field>
 							<v-text-field label="Screen Name" v-model="screenName"></v-text-field>
 							<v-text-field label="Space ID" v-model="roomId"></v-text-field>
-							<v-switch v-model="enableRtc" :label="enableRtc ? 'WebRTC Enabled' : 'WebRTC Disabled'" color="primary"></v-switch>
+							<!-- <v-switch v-model="enableRtc" :label="enableRtc ? 'WebRTC Enabled' : 'WebRTC Disabled'" color="primary"></v-switch> -->
 						</v-col>
 						<v-row no-gutters>
 							<v-spacer/>
@@ -59,7 +59,7 @@ const api = ref("");
 const username = ref("");
 const password = ref("");
 const screenName = ref("");
-const enableRtc = ref(config.webRtcEnabled);
+const enableRtc = ref(true);
 const isBusy = ref(true);
 const tab = ref<string>("guestUser");
 let connection: CavrnusSpaceConnection = undefined;
@@ -86,23 +86,21 @@ async function connectGuest()
 	try
 	{
 		const options: CscOptions = {
-			enableRtc: enableRtc.value
+			enableRtc: enableRtc.value,
+			defaultAudioMuteState: false,
+			defaultVideoMuteState: true,
+			defaultPresentationMuteState: true
 		};
 		
 		state.csc = await initializeCsc(options);
 
-		await state.csc.authenticateAsGuest(config.apiEndpoint, screenName.value);
+		await state.csc.authenticateAsGuest(api.value, screenName.value);
 		const spaceConnection = await state.csc.joinSpace(roomId.value);
 		connection = spaceConnection;
 		
-		state.webRtcEnabled = enableRtc.value;
-
         state.csc.onDisconnect(handleDisconnect);
 
 		conn.set(spaceConnection);
-
-		if (config.webRtcEnabled)
-			state.csc.setLocalUserStreamingState(spaceConnection, false, false);
 
 		router.push({name: "configurator"});
 	}
@@ -123,9 +121,11 @@ async function connectUser()
 
 	try
 	{
-		console.log("WebRTC enabled is: ", enableRtc.value)
 		const options: CscOptions = {
-			enableRtc: enableRtc.value
+			enableRtc: enableRtc.value,
+			defaultAudioMuteState: false,
+			defaultVideoMuteState: true,
+			defaultPresentationMuteState: true
 		};
 
 		state.webRtcEnabled = enableRtc.value;

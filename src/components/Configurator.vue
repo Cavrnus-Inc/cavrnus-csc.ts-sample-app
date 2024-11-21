@@ -11,11 +11,11 @@
 
 			<div v-else>
 				<v-row no-gutters>
-					<v-col cols="7">
+					<v-col cols="6">
 						<Properties />
 					</v-col>
 					<v-col cols="3"></v-col>
-					<v-col cols="2">
+					<v-col cols="3">
 						<Participants/>
 					</v-col>
 				</v-row>

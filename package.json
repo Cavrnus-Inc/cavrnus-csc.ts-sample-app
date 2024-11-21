@@ -11,8 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@cavrnus/csc": "^1.1.1",
-    "@cavrnus/webrtc": "^0.4.12",
+    "@cavrnus/csc": "^1.1.18",
+    "@cavrnus/webrtc": "^0.4.31",
     "@mdi/font": "^7.4.47",
     "http-status-codes": "^2.3.0",
     "pinia": "^2.0.23",
